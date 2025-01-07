@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mystical Citizen - CodeCitizen</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #6a3fc6, #5a82e3);
+            color: white;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+        }
+
+        .header {
+            background-color: #3c4fa1;
+            padding: 20px 0;
+            text-align: center;
+            width: 100%;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin: 0;
+        }
+
+        .header .mystical {
+            color: #ff61a6; /* Pink */
+        }
+
+        .blog-container {
+            max-width: 800px;
+            width: 100%;
+            margin: 20px 0;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .blog-post {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .blog-post h2 {
+            color: #ff61a6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span class="mystical">Mystical</span> Citizen</h1>
+    </div>
+
+    <div class="blog-container" id="blogPosts">
+        <p>Loading blog posts...</p>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-database.js";
+
+        let firebaseConfig;
+        let openaiKey;
+
+        // Fetch API keys from backend
+        async function fetchKeys() {
+            const firebaseRes = await fetch('/firebase-key');
+            const openaiRes = await fetch('/openai-key');
+
+            const firebaseData = await firebaseRes.json();
+            const openaiData = await openaiRes.json();
+
+            firebaseConfig = {
+                apiKey: firebaseData.apiKey,
+                authDomain: "codecitizen.firebaseapp.com",
+                databaseURL: "https://codecitizen-default-rtdb.firebaseio.com",
+                projectId: "codecitizen",
+                storageBucket: "codecitizen.appspot.com",
+                messagingSenderId: "951887554060",
+                appId: "1:951887554060:web:c99c2f52eb5d4c1fd8f029"
+            };
+
+            openaiKey = openaiData.apiKey;
+
+            initializeFirebase();
+        }
+
+        // Initialize Firebase
+        function initializeFirebase() {
+            const app = initializeApp(firebaseConfig);
+            const database = getDatabase(app);
+            const postsRef = ref(database, 'blogPosts');
+            fetchBlogPosts(postsRef);
+        }
+
+        // Fetch and display blog posts
+        function fetchBlogPosts(postsRef) {
+            onValue(postsRef, (snapshot) => {
+                const blogContainer = document.getElementById('blogPosts');
+                blogContainer.innerHTML = '';
+
+                const data = snapshot.val();
+                if (data) {
+                    const posts = Object.values(data).reverse();
+                    posts.forEach(post => {
+                        const postElement = document.createElement('div');
+                        postElement.className = 'blog-post';
+                        postElement.innerHTML = `<h2>${post.title}</h2><p>${post.content}</p>`;
+                        blogContainer.appendChild(postElement);
+                    });
+                } else {
+                    blogContainer.innerHTML = '<p>No blog posts yet.</p>';
+                }
+            });
+        }
+
+        // Generate new blog post using OpenAI
+        async function generateBlogPost() {
+            const prompt = "Write a mystical story";
+
+            try {
+                const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${openaiKey}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: "gpt-3.5-turbo",
+                        messages: [
+                            { role: "system", content: "You are a mystical blog writer." },
+                            { role: "user", content: prompt }
+                        ]
+                    })
+                });
+
+                const result = await response.json();
+                const generatedText = result.choices[0].message.content.trim();
+                const newPost = {
+                    title: generatedText.split("\n")[0],
+                    content: generatedText
+                };
+
+                push(ref(database, 'blogPosts'), newPost);
+            } catch (error) {
+                console.error("Error generating post:", error);
+            }
+        }
+
+        fetchKeys();
+    </script>
+</body>
+</html>
