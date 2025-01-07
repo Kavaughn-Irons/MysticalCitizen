@@ -3,7 +3,9 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const port = 3000;
+
+// Use the Heroku port or fallback to 3000 for local development
+const port = process.env.PORT || 3000;
 
 // Enable CORS
 app.use(cors());
