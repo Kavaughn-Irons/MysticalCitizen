@@ -20,3 +20,25 @@
     "node": "16.x"
   }
 }
+{
+  "name": "code-citizen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node Server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "firebase": "^11.1.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

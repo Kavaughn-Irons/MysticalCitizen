@@ -71,35 +71,53 @@
         import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.1.1/firebase-database.js";
 
         let firebaseConfig;
-        let openaiKey;
+        let openaiKey;  // Declare openaiKey here, will be assigned later
 
-        // Fetch API keys from backend
+        // Fetch API keys from backend with proper headers
         async function fetchKeys() {
-            const firebaseRes = await fetch('/firebase-key');
-            const openaiRes = await fetch('/openai-key');
+            
+            try {
+                const openaiRes = await fetch('/openai-key', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json' // Add Bearer token to the header
+                    }
+                });
 
-            const firebaseData = await firebaseRes.json();
-            const openaiData = await openaiRes.json();
+                const firebaseRes = await fetch('/firebase-key', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json' // Add Bearer token to the header
+                    }
+                });
 
-            firebaseConfig = {
-                apiKey: firebaseData.apiKey,
-                authDomain: "codecitizen.firebaseapp.com",
-                databaseURL: "https://codecitizen-default-rtdb.firebaseio.com",
-                projectId: "codecitizen",
-                storageBucket: "codecitizen.appspot.com",
-                messagingSenderId: "951887554060",
-                appId: "1:951887554060:web:c99c2f52eb5d4c1fd8f029"
-            };
+                const firebaseData = await firebaseRes.json();
+                const openaiData = await openaiRes.json();
 
-            openaiKey = openaiData.apiKey;
+                firebaseConfig = {
+                    apiKey: firebaseData.apiKey,
+                    authDomain: "codecitizen.firebaseapp.com",
+                    databaseURL: "https://codecitizen-default-rtdb.firebaseio.com",
+                    projectId: "codecitizen",
+                    storageBucket: "codecitizen.appspot.com",
+                    messagingSenderId: "951887554060",
+                    appId: "1:951887554060:web:c99c2f52eb5d4c1fd8f029"
+                };
 
-            initializeFirebase();
+                openaiKey = openaiData.apiKey;  // Assign the OpenAI API key here after the fetch
+
+                initializeFirebase();
+                startGeneratingPosts();
+            } catch (error) {
+                console.error("Error fetching keys:", error);
+            }
         }
 
         // Initialize Firebase
+        let database;  // Declare database variable at the top level
         function initializeFirebase() {
             const app = initializeApp(firebaseConfig);
-            const database = getDatabase(app);
+            database = getDatabase(app);  // Initialize the database and assign it to the variable
             const postsRef = ref(database, 'blogPosts');
             fetchBlogPosts(postsRef);
         }
@@ -127,14 +145,15 @@
 
         // Generate new blog post using OpenAI
         async function generateBlogPost() {
-            const prompt = "Write a very very very unique mystical story";
+            const prompt = "Write a very very unique mystical story write about very completely innovative and very different topics, do not write about the same topic. make it mystical";
 
             try {
                 const response = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
+
                     headers: {
-                        'Authorization': `Bearer ${openaiKey}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${openaiKey}`,  // Use the openaiKey here
+                        'Content-Type': 'application/json'       // Project ID
                     },
                     body: JSON.stringify({
                         model: "gpt-3.5-turbo",
@@ -156,6 +175,12 @@
             } catch (error) {
                 console.error("Error generating post:", error);
             }
+        }
+
+        // Start generating blog posts every 30 seconds
+        const postInterval = 30000; // 30 seconds interval in milliseconds
+        function startGeneratingPosts() {
+            setInterval(generateBlogPost, postInterval);
         }
 
         fetchKeys();
