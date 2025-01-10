@@ -67,7 +67,7 @@ async function generateBlogPost() {
 }
 
 // Start generating blog posts every 30 seconds
-const postInterval = 600000; // 30 seconds
+const postInterval = 21600000; // 30 seconds
 function startGeneratingPosts() {
     setInterval(generateBlogPost, postInterval);
 }
