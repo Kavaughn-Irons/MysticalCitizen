@@ -5,9 +5,8 @@ const { initializeApp } = require("firebase/app");
 const { getDatabase, ref, push } = require("firebase/database");
 const fetch = require('node-fetch');
 
-
-
-firebaseConfig = {
+// Firebase configuration
+const firebaseConfig = {
     apiKey: process.env.FIREBASE_API_KEY,
     authDomain: "codecitizen.firebaseapp.com",
     databaseURL: "https://codecitizen-default-rtdb.firebaseio.com",
@@ -17,19 +16,26 @@ firebaseConfig = {
     appId: "1:951887554060:web:c99c2f52eb5d4c1fd8f029"
 };
 
+// Initialize Firebase
 const appFirebase = initializeApp(firebaseConfig);
 const database = getDatabase(appFirebase);
 
+// Function to generate blog post
 async function generateBlogPost() {
-const prompt = "there should be no title. no explaining in the beginning just output the story. Do not write about a circle or a forest write about the main topic. Write a very unique mystical story about one of the main topics and choose one of the main topics randomly. Make choosing a topic an advanced random process. Advanced randomness. Atronomy, Quantum Mysticism, Ethereal Realms, Astral Projection, Sacred Geometry, Crystal Healing, Divination, The Akashic Records, The Etheric Body, Alchemy of the Soul, The Oracles Vision, Ancient Wisdom, The Third Eye, Shamanic Journeys, Karma and Reincarnation, Spirit Guides, The Multiverse, Sacred Circles, Soul Contracts, The Unseen Forces, The Power of Symbols, Magic of the Elements, Intuition and Inner Sight, Sacred Sound Frequencies, Energy Healing, The Flow of Chi, Light Bodies, The Astral Plane, The Sacred Feminine, Transcendental Meditation, Moon Phases and Rituals, The Dark Night of the Soul, The Path of Enlightenment, Visionary Art, Serpent Power, Metaphysical Realms, Divine Manifestation, The Golden Ratio, Celestial Beings, Cosmic Consciousness, The Spirit of the Forest, The Philosophers Stone, Interdimensional Beings, Astral Voyages, Soul Evolution, Psychic Abilities, Universal Energy Field, Sacred Fire, The Sacred Breath, The Divine Spark, The Eternal Flame, The Inner Temple, Light Language, Sacred Masculine, The Void, Parallel Realities, Time Bending, The Circle of Life, The Eternal Now, Spiritual Awakening, Cosmic Energy Flow, Shifting Consciousness, The Higher Self, The Law of Attraction, Soul Retrieval, The Veil Between Worlds, Ritual Magic, Channeling Messages, The Waking Dream, Soul Mates, Quantum Consciousness, The Shifting Dimensions, The Infinite Mind, Dreamtime Realms, The Ancient Mysteries, Vibrational Healing, The Light of the Ancients, Ascension Pathways, The Crystal Kingdom, The Mind-Body Connection, Lightworkers Journey, Deep Meditation States, The Unconscious Mind, The Holy Grail, Sacred Symbols and Archetypes, The Altar of Truth, Energy Transference, Interdimensional Travel, The Five Elements of Being, Awakening to the Divine, The Mind of the Universe, Sacred Temples of Light, The Eternal Soul, The Cosmic Spiral, Celestial Soundscapes, Spirit of the Earth, The Divine Matrix, The Ancient Ones, Light of the Universe, The Divine Flow write about very completely innovative and very different topics, do not write about the same topic. No special characters, no title";
+    const prompt = `
+        There should be no title. No explaining in the beginning, just output the story.
+        Do not write about a circle or a forest. Write about the main topic. Write a very unique mystical story
+        about one of the main topics, chosen randomly using advanced randomness. The main topics include:
+        Astronomy, Quantum Mysticism, Ethereal Realms, Astral Projection, Sacred Geometry, Crystal Healing, 
+        Divination, The Akashic Records, The Etheric Body, Alchemy of the Soul, and many others.
+    `;
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
-
             headers: {
-                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,  // Use the openaiKey here
-                'Content-Type': 'application/json'       // Project ID
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 model: "gpt-4-turbo",
@@ -40,6 +46,10 @@ const prompt = "there should be no title. no explaining in the beginning just ou
             })
         });
 
+        if (!response.ok) {
+            throw new Error(`OpenAI API Error: ${response.status} ${response.statusText}`);
+        }
+
         const result = await response.json();
         const generatedText = result.choices[0].message.content.trim();
         const newPost = {
@@ -47,14 +57,15 @@ const prompt = "there should be no title. no explaining in the beginning just ou
             content: generatedText
         };
 
-        push(ref(database, 'blogPosts'), newPost);
+        await push(ref(database, 'blogPosts'), newPost);
+        console.log("Blog post generated and saved.");
     } catch (error) {
-        console.error("Error generating post:", error);
+        console.error("Error generating post:", error.message);
     }
 }
 
 // Start generating blog posts every 30 seconds
-const postInterval = 30000; // 30 seconds interval in milliseconds
+const postInterval = 30000; // 30 seconds
 function startGeneratingPosts() {
     setInterval(generateBlogPost, postInterval);
 }
@@ -62,16 +73,14 @@ function startGeneratingPosts() {
 startGeneratingPosts();
 
 const app = express();
-
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 
 // Enable CORS
 app.use(cors({
-    origin: process.env.PORT,
+    origin: '*',
     credentials: true,
     allowedHeaders: ['Authorization', 'Content-Type']
 }));
-
 
 // Serve MysticalCitizen.html at the root URL
 app.get('/', (req, res) => {
@@ -88,6 +97,7 @@ app.get('/openai-key', (req, res) => {
     res.json({ 'apiKey': process.env.OPENAI_API_KEY });
 });
 
+// Handle CORS for all other routes
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
