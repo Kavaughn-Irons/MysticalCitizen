@@ -10,13 +10,14 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "firebase": "^11.1.0"
-  },
-  "engines": {
-    "node": "20.x"
+    "firebase": "^11.1.0",
+    "node-fetch": "^3.3.2"
   }
 }
