@@ -41,6 +41,8 @@ function startGeneratingPosts() {
     setInterval(generateBlogPost, postInterval);
 }
 
+startGeneratingPosts();
+
 const app = express();
 
 const port = process.env.PORT;
