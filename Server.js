@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const { initializeApp } = require("firebase/app");
 const { getDatabase, ref, push } = require("firebase/database");
-const fetch = require('node-fetch');
+
+// Import `node-fetch` dynamically for compatibility
+const fetch = (...args) => import('node-fetch').then(({ default: fetch }) => fetch(...args));
 
 // Firebase configuration
 const firebaseConfig = {
